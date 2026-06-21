@@ -4,25 +4,20 @@ const cors = require('cors');
 const app = express();
 const PORT = 3001;
 
-// Coloca aquí tu clave de API real de WeatherAPI.com (se subirá a Git)
 const WEATHER_API_KEY = "918194e388c44b24ac5192041262106";
 
-// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// Log requests
 app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
     next();
 });
 
-// Helper function to generate mock weather data
 function getMockWeather(locationName) {
     const cleanName = locationName.trim();
     const hash = Array.from(cleanName).reduce((acc, char) => acc + char.charCodeAt(0), 0);
 
-    // Predictable but varied temperature between 15°C and 35°C
     const temp_c = 15 + (hash % 21);
 
     const conditions = ["Clear", "Partly cloudy", "Sunny", "Overcast", "Patchy rain nearby"];
@@ -36,7 +31,6 @@ function getMockWeather(locationName) {
     };
 }
 
-// Function to fetch weather from external API or fallback to mock
 async function fetchWeather(location) {
     if (!WEATHER_API_KEY || WEATHER_API_KEY.trim() === "" || WEATHER_API_KEY === "TU_WEATHER_API_KEY_AQUI") {
         return getMockWeather(location);
@@ -45,7 +39,6 @@ async function fetchWeather(location) {
     try {
         const url = `https://api.weatherapi.com/v1/current.json?key=${WEATHER_API_KEY}&q=${encodeURIComponent(location)}&aqi=no`;
 
-        // We use standard fetch API (supported natively in Node.js 18+)
         const response = await fetch(url);
 
         if (!response.ok) {
@@ -67,7 +60,6 @@ async function fetchWeather(location) {
     }
 }
 
-// Health check endpoint
 app.get('/health', (req, res) => {
     res.json({
         status: "UP",
@@ -77,7 +69,6 @@ app.get('/health', (req, res) => {
     });
 });
 
-// Weather endpoint
 app.get('/api/weather', async (req, res, next) => {
     try {
         const { country } = req.query;
@@ -91,7 +82,6 @@ app.get('/api/weather', async (req, res, next) => {
 
         console.log(`Processing weather request for requested country: "${country}" and "Nicaragua"`);
 
-        // Fetch both in parallel
         const [requestedCountryWeather, nicaraguaWeather] = await Promise.all([
             fetchWeather(country),
             fetchWeather('Nicaragua')
@@ -106,7 +96,6 @@ app.get('/api/weather', async (req, res, next) => {
     }
 });
 
-// Global error handler
 app.use((err, req, res, next) => {
     console.error("Unhandled error:", err);
     res.status(500).json({
@@ -115,7 +104,6 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Start Server
 app.listen(PORT, () => {
     console.log(`==================================================`);
     console.log(` Weather Microservice started on port ${PORT}`);
